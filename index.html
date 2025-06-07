@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Computing Quiz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .quiz-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .quiz-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(to right, #667eea, #764ba2);
+        }
+        
+        .quiz-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .question-counter {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+        
+        .question-container {
+            margin-bottom: 30px;
+        }
+        
+        .question {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
+        
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .option {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .option:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
+        }
+        
+        .option.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        }
+        
+        .option.correct {
+            border-color: #28a745;
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(40, 167, 69, 0.05));
+        }
+        
+        .option.incorrect {
+            border-color: #dc3545;
+            background: linear-gradient(135deg, rgba(220, 53, 69, 0.1), rgba(220, 53, 69, 0.05));
+        }
+        
+        .feedback {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: 500;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+        
+        .feedback.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .feedback.correct {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .feedback.incorrect {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-next {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .btn-next:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-next:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-exit {
+            background: transparent;
+            color: #666;
+            border: 2px solid #666;
+        }
+        
+        .btn-exit:hover {
+            background: #666;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .results {
+            text-align: center;
+            display: none;
+        }
+        
+        .results.show {
+            display: block;
+        }
+        
+        .score {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 20px 0;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .score-message {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 600px) {
+            .quiz-container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .question {
+                font-size: 1.1em;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <div class="quiz-header">
+            <h1>Social Computing Quiz - Supplementary study material prepared by Prof. Rahul M. Samant</h1>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="question-counter" id="questionCounter">Question 1 of 20</div>
+        </div>
+        
+        <div class="quiz-content" id="quizContent">
+            <div class="question-container">
+                <div class="question" id="questionText"></div>
+                <div class="options" id="optionsContainer"></div>
+                <div class="feedback" id="feedback"></div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-exit" onclick="exitQuiz()">Exit Quiz</button>
+            <button class="btn btn-next" id="nextBtn" onclick="nextQuestion()" disabled>Next Question</button>
+        </div>
+        
+        <div class="results" id="results">
+            <h2>Quiz Complete!</h2>
+            <div class="score" id="finalScore"></div>
+            <div class="score-message" id="scoreMessage"></div>
+            <button class="btn btn-next" onclick="restartQuiz()">Restart Quiz</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "What is the primary focus of Social Computing?",
+                options: ["Hardware optimization", "Human-computer interaction in social contexts", "Database management", "Network security"],
+                correct: 1,
+                explanation: "Social Computing focuses on how people interact with computers and technology in social settings."
+            },
+ {
+        question: "What is the primary focus of Social Computing?",
+        options: ["Hardware optimization", "Human-computer interaction in social contexts", "Database management", "Network security"],
+        correct: 1,
+        explanation: "Social Computing focuses on how people interact with computers and technology in social settings."
+    },
+    {
+        question: "Which of the following is NOT a key component of social computing?",
+        options: ["Social interaction", "Collaborative technologies", "CPU architecture", "Online communities"],
+        correct: 2,
+        explanation: "CPU architecture is a hardware concern, not a social computing component."
+    },
+    {
+        question: "What does CSCW stand for in social computing?",
+        options: ["Computer Supported Cooperative Work", "Central System Control Workflow", "Collaborative Social Computing Web", "Community Social Content Web"],
+        correct: 0,
+        explanation: "CSCW stands for Computer Supported Cooperative Work, a foundational concept in social computing."
+    },
+    {
+        question: "Which platform is considered one of the earliest social networking sites?",
+        options: ["Facebook", "Twitter", "Friendster", "LinkedIn"],
+        correct: 2,
+        explanation: "Friendster, launched in 2002, was one of the pioneering social networking platforms."
+    },
+    {
+        question: "What is a social network in computing terms?",
+        options: ["A physical network of computers", "A structure of relationships between social entities", "A type of database", "A security protocol"],
+        correct: 1,
+        explanation: "A social network represents the structure of relationships and interactions between social entities (people, organizations, etc.)."
+    },
+    {
+        question: "What is the main purpose of social media analytics?",
+        options: ["Hardware monitoring", "Understanding user behavior and engagement", "Network routing", "Data encryption"],
+        correct: 1,
+        explanation: "Social media analytics focuses on analyzing user behavior, engagement patterns, and social interactions."
+    },
+    {
+        question: "Which concept describes the tendency of people to connect with similar others?",
+        options: ["Heterophily", "Homophily", "Multiplexity", "Transitivity"],
+        correct: 1,
+        explanation: "Homophily is the principle that similarity breeds connection - people tend to associate with similar others."
+    },
+    {
+        question: "What is crowdsourcing?",
+        options: ["A type of cloud computing", "Obtaining input from a large group of people", "A database optimization technique", "A network security method"],
+        correct: 1,
+        explanation: "Crowdsourcing involves obtaining ideas, services, or content from a large group of people, typically via the internet."
+    },
+    {
+        question: "Which of the following is an example of collaborative filtering?",
+        options: ["Antivirus software", "Movie recommendations on Netflix", "File compression", "Network firewall"],
+        correct: 1,
+        explanation: "Collaborative filtering uses user behavior and preferences to make recommendations, like Netflix movie suggestions."
+    },
+    {
+        question: "What is a hashtag primarily used for?",
+        options: ["Password security", "Content categorization and discovery", "Data encryption", "Network routing"],
+        correct: 1,
+        explanation: "Hashtags are metadata tags used to categorize content and make it discoverable on social platforms."
+    },
+    {
+        question: "What does 'going viral' mean in social computing?",
+        options: ["Computer virus infection", "Rapid widespread sharing of content", "System crash", "Data corruption"],
+        correct: 1,
+        explanation: "Going viral refers to content spreading rapidly and widely across social networks through sharing."
+    },
+    {
+        question: "Which metric measures how connected a social network is?",
+        options: ["Bandwidth", "Density", "Latency", "Throughput"],
+        correct: 1,
+        explanation: "Network density measures the proportion of actual connections to possible connections in a social network."
+    },
+    {
+        question: "What is user-generated content (UGC)?",
+        options: ["Content created by AI", "Content created by users of a platform", "System-generated logs", "Network configuration files"],
+        correct: 1,
+        explanation: "User-generated content is any content created and shared by users of a platform or service."
+    },
+    {
+        question: "What is the 'six degrees of separation' concept?",
+        options: ["Network security levels", "Temperature measurement", "Social connection theory", "Data classification"],
+        correct: 2,
+        explanation: "Six degrees of separation suggests that everyone is connected to everyone else by at most six intermediary relationships."
+    },
+    {
+        question: "Which of the following is a key challenge in online communities?",
+        options: ["Hardware limitations", "Maintaining engagement and preventing toxicity", "Network bandwidth", "Storage capacity"],
+        correct: 1,
+        explanation: "Online communities face challenges in maintaining user engagement while preventing toxic behavior and maintaining quality."
+    },
+    {
+        question: "What is social proof in the context of social computing?",
+        options: ["Identity verification", "People following others' behaviors as guidance", "Data validation", "Network authentication"],
+        correct: 1,
+        explanation: "Social proof is the psychological phenomenon where people follow others' actions as a guide for their own behavior."
+    },
+    {
+        question: "What does API stand for in social platforms?",
+        options: ["Advanced Programming Interface", "Application Programming Interface", "Automated Platform Integration", "Advanced Platform Intelligence"],
+        correct: 1,
+        explanation: "API stands for Application Programming Interface, allowing different software applications to communicate."
+    },
+    {
+        question: "What is a social graph?",
+        options: ["A statistical chart", "A representation of social relationships", "A network topology diagram", "A performance metric"],
+        correct: 1,
+        explanation: "A social graph is a model that represents social relationships and connections between users."
+    },
+    {
+        question: "Which concept describes the strength of relationships in social networks?",
+        options: ["Tie strength", "Node weight", "Edge capacity", "Link bandwidth"],
+        correct: 0,
+        explanation: "Tie strength refers to the intensity and intimacy of relationships between nodes in a social network."
+    },
+    {
+        question: "What is social tagging?",
+        options: ["User identification", "Collaborative content labeling", "Network monitoring", "Security marking"],
+        correct: 1,
+        explanation: "Social tagging is the practice of users collaboratively adding metadata tags to content for organization and discovery."
+    },
+    {
+        question: "What is the purpose of content moderation?",
+        options: ["Performance optimization", "Maintaining community standards and safety", "Data backup", "Network security"],
+        correct: 1,
+        explanation: "Content moderation ensures that user-generated content adheres to community guidelines and safety standards."
+    },
+    {
+        question: "Which term describes the phenomenon where online groups become more extreme?",
+        options: ["Group polarization", "Network congestion", "Data fragmentation", "System overload"],
+        correct: 0,
+        explanation: "Group polarization describes how group discussions tend to amplify initial inclinations, leading to more extreme positions."
+    },
+    {
+        question: "What is a filter bubble?",
+        options: ["Network security filter", "Personalized information environment", "Data compression technique", "System cache"],
+        correct: 1,
+        explanation: "A filter bubble is an environment where users are exposed only to information and opinions that conform to their existing beliefs."
+    },
+    {
+        question: "What does 'lurking' mean in online communities?",
+        options: ["Malicious activity", "Passive participation without contributing", "System monitoring", "Data mining"],
+        correct: 1,
+        explanation: "Lurking refers to observing and consuming content in online communities without actively participating or contributing."
+    },
+    {
+        question: "What is social commerce?",
+        options: ["B2B transactions", "Commerce facilitated through social networks", "Database transactions", "Network protocols"],
+        correct: 1,
+        explanation: "Social commerce refers to buying and selling activities facilitated through social networking platforms."
+    },
+    {
+        question: "Which concept measures how quickly information spreads in a network?",
+        options: ["Bandwidth", "Diffusion rate", "Latency", "Throughput"],
+        correct: 1,
+        explanation: "Diffusion rate measures how quickly information, innovations, or behaviors spread through a social network."
+    },
+    {
+        question: "What is gamification in social computing?",
+        options: ["Creating video games", "Adding game elements to non-game contexts", "Gaming performance optimization", "Game security"],
+        correct: 1,
+        explanation: "Gamification involves incorporating game design elements into non-game contexts to increase engagement and motivation."
+    },
+    {
+        question: "What is the 'wisdom of crowds' concept?",
+        options: ["AI intelligence", "Collective intelligence of groups", "Network optimization", "Data aggregation"],
+        correct: 1,
+        explanation: "Wisdom of crowds suggests that large groups can collectively make better decisions than individual experts."
+    },
+    {
+        question: "What is a social bot?",
+        options: ["Human user", "Automated account that mimics human behavior", "Hardware robot", "Network device"],
+        correct: 1,
+        explanation: "A social bot is an automated account designed to interact on social platforms, often mimicking human behavior."
+    },
+    {
+        question: "What does 'going dark' mean in social media context?",
+        options: ["System shutdown", "User becoming inactive or leaving platform", "Screen dimming", "Data encryption"],
+        correct: 1,
+        explanation: "Going dark refers to a user becoming inactive on social media or completely leaving a platform."
+    },
+    {
+        question: "What is social proof?",
+        options: ["Identity verification", "Using others' actions as behavioral guide", "Data validation", "Network authentication"],
+        correct: 1,
+        explanation: "Social proof is when people look to others' behavior to determine appropriate actions in uncertain situations."
+    },
+    {
+        question: "What is a echo chamber?",
+        options: ["Audio feedback", "Environment reinforcing existing beliefs", "Network loop", "Data redundancy"],
+        correct: 1,
+        explanation: "An echo chamber is an environment where users encounter only beliefs or opinions that coincide with their own."
+    },
+    {
+        question: "What is social listening?",
+        options: ["Audio processing", "Monitoring social media for brand mentions", "Network monitoring", "Voice recognition"],
+        correct: 1,
+        explanation: "Social listening involves monitoring social media platforms for mentions of brands, products, or topics."
+    },
+    {
+        question: "What is peer production?",
+        options: ["Manufacturing process", "Collaborative creation by equals", "Network topology", "Data replication"],
+        correct: 1,
+        explanation: "Peer production is collaborative creation of goods or services by groups of peers without traditional hierarchical organization."
+    },
+    {
+        question: "What is social capital?",
+        options: ["Financial investment", "Networks of relationships enabling society function", "Server capacity", "Data storage"],
+        correct: 1,
+        explanation: "Social capital refers to networks of relationships that enable society to function effectively and facilitate cooperation."
+    },
+    {
+        question: "What is viral marketing?",
+        options: ["Computer virus", "Marketing that spreads through social sharing", "Network security", "Data mining"],
+        correct: 1,
+        explanation: "Viral marketing is a strategy that encourages people to share marketing messages, creating exponential growth in exposure."
+    },
+    {
+        question: "What is a influencer in social media?",
+        options: ["Algorithm", "Person with ability to affect others' decisions", "Network administrator", "Database manager"],
+        correct: 1,
+        explanation: "An influencer is a person who has the ability to influence potential buyers through their authority, knowledge, or relationship with audience."
+    },
+    {
+        question: "What is social searching?",
+        options: ["Database queries", "Search enhanced by social information", "Network scanning", "User authentication"],
+        correct: 1,
+        explanation: "Social searching leverages social network information to enhance search results and recommendations."
+    },
+    {
+        question: "What is community detection in social networks?",
+        options: ["User verification", "Identifying groups of closely connected nodes", "Network monitoring", "Security scanning"],
+        correct: 1,
+        explanation: "Community detection algorithms identify groups or clusters of nodes that are more densely connected internally than externally."
+    },
+    {
+        question: "What is social media engagement?",
+        options: ["User registration", "Level of interaction with content", "Network connection", "Data processing"],
+        correct: 1,
+        explanation: "Social media engagement measures how users interact with content through likes, comments, shares, and other actions."
+    },
+
+    // Intermediate Concepts (41-120)
+    {
+        question: "What is the Small World phenomenon in social networks?",
+        options: ["Limited network size", "Short path lengths despite network size", "Local area networks", "Minimal connectivity"],
+        correct: 1,
+        explanation: "Small World networks have short average path lengths and high clustering, allowing efficient information flow."
+    },
+    {
+        question: "Which algorithm is commonly used for community detection?",
+        options: ["Dijkstra's algorithm", "Modularity optimization", "Binary search", "Hash function"],
+        correct: 1,
+        explanation: "Modularity optimization algorithms like Louvain method are commonly used to detect communities in social networks."
+    },
+    {
+        question: "What is the difference between strong and weak ties?",
+        options: ["Connection speed", "Relationship intensity and frequency", "Network topology", "Data transmission rate"],
+        correct: 1,
+        explanation: "Strong ties involve frequent interaction and emotional closeness, while weak ties are casual acquaintances with infrequent contact."
+    },
+    {
+        question: "What is preferential attachment in network growth?",
+        options: ["Random connections", "Connecting to already well-connected nodes", "Geographic proximity", "Alphabetical ordering"],
+        correct: 1,
+        explanation: "Preferential attachment means new nodes tend to connect to existing nodes that already have many connections."
+    },
+    {
+        question: "What is the clustering coefficient in social networks?",
+        options: ["Number of clusters", "Degree to which nodes cluster together", "Network diameter", "Connection speed"],
+        correct: 1,
+        explanation: "Clustering coefficient measures the degree to which nodes in a network tend to cluster together."
+    },
+    {
+        question: "What is centrality in network analysis?",
+        options: ["Geographic center", "Measure of node importance", "Network speed", "Data storage location"],
+        correct: 1,
+        explanation: "Centrality measures identify the most important nodes in a network based on various criteria like connections or position."
+    },
+    {
+        question: "What is betweenness centrality?",
+        options: ["Distance between nodes", "Number of shortest paths passing through a node", "Node degree", "Connection strength"],
+        correct: 1,
+        explanation: "Betweenness centrality measures how often a node lies on the shortest path between other nodes, indicating its bridging importance."
+    },
+    {
+        question: "What is eigenvector centrality?",
+        options: ["Mathematical calculation", "Centrality based on connections to important nodes", "Network diameter", "Data processing speed"],
+        correct: 1,
+        explanation: "Eigenvector centrality considers not just the number of connections, but the importance of those connections."
+    },
+    {
+        question: "What is the Matthew Effect in social networks?",
+        options: ["Network failure", "Rich get richer phenomenon", "Data corruption", "System overload"],
+        correct: 1,
+        explanation: "The Matthew Effect describes how advantages compound - popular users/content become more popular over time."
+    },
+    {
+        question: "What is structural equivalence in social networks?",
+        options: ["Network topology", "Nodes having similar connection patterns", "Data equivalence", "System redundancy"],
+        correct: 1,
+        explanation: "Structural equivalence occurs when nodes have similar patterns of relationships to other nodes in the network."
+    },
+    {
+        question: "What is the friendship paradox?",
+        options: ["Having no friends", "Your friends have more friends than you on average", "False friendships", "Network isolation"],
+        correct: 1,
+        explanation: "The friendship paradox states that your friends have more friends than you do on average, due to sampling bias."
+    },
+    {
+        question: "What is homophily in social network formation?",
+        options: ["Fear of similarity", "Tendency to connect with similar others", "Random connections", "Geographic clustering"],
+        correct: 1,
+        explanation: "Homophily is the principle that similarity breeds connection - people tend to associate with similar others."
+    },
+    {
+        question: "What is social influence in networks?",
+        options: ["Network performance", "How connected individuals affect each other", "Data transmission", "System control"],
+        correct: 1,
+        explanation: "Social influence describes how individuals' behaviors, opinions, or decisions are affected by their network connections."
+    },
+    {
+        question: "What is information cascade?",
+        options: ["Data overflow", "Sequential decision-making based on others' actions", "Network flooding", "System crash"],
+        correct: 1,
+        explanation: "Information cascade occurs when people make decisions based on observing others' actions rather than their private information."
+    },
+    {
+        question: "What is the threshold model in social networks?",
+        options: ["Network capacity", "Adoption based on proportion of adopting neighbors", "Connection limit", "Data threshold"],
+        correct: 1,
+        explanation: "The threshold model describes how individuals adopt behaviors when the proportion of their neighbors who have adopted exceeds their threshold."
+    },
+    {
+        question: "What is network contagion?",
+        options: ["Computer virus", "Spread of behaviors/information through networks", "Network failure", "Data corruption"],
+        correct: 1,
+        explanation: "Network contagion describes how behaviors, information, or phenomena spread through social networks like diseases."
+    },
+    {
+        question: "What is the strength of weak ties theory?",
+        options: ["Connection quality", "Weak ties provide access to diverse information", "Network reliability", "Data integrity"],
+        correct: 1,
+        explanation: "Granovetter's theory suggests weak ties are important for accessing diverse information and opportunities beyond one's close circle."
+    },
+    {
+        question: "What is structural holes theory?",
+        options: ["Network gaps", "Advantages of bridging disconnected groups", "Data missing", "System vulnerabilities"],
+        correct: 1,
+        explanation: "Structural holes theory suggests individuals who bridge disconnected groups gain information and control advantages."
+    },
+    {
+        question: "What is social network analysis (SNA)?",
+        options: ["Software testing", "Systematic study of social relationships", "Network monitoring", "Data analysis"],
+        correct: 1,
+        explanation: "SNA is the systematic analysis of social networks to understand relationships, patterns, and structures."
+    },
+    {
+        question: "What is the scale-free property in networks?",
+        options: ["Scalable architecture", "Power-law degree distribution", "Network size", "Data scaling"],
+        correct: 1,
+        explanation: "Scale-free networks have degree distributions that follow a power law - few nodes have many connections, most have few."
+    },
+    {
+        question: "What is community structure in networks?",
+        options: ["Physical structure", "Groups of densely connected nodes", "Network topology", "System architecture"],
+        correct: 1,
+        explanation: "Community structure refers to groups of nodes that are more densely connected internally than to the rest of the network."
+    },
+    {
+        question: "What is network resilience?",
+        options: ["Backup systems", "Ability to maintain function despite disruptions", "Network speed", "Data recovery"],
+        correct: 1,
+        explanation: "Network resilience is the ability of a network to maintain its functionality when nodes or edges are removed."
+    },
+    {
+        question: "What is the difference between bonding and bridging social capital?",
+        options: ["Connection type", "Within-group vs. between-group connections", "Network protocol", "Data binding"],
+        correct: 1,
+        explanation: "Bonding social capital connects similar people (within-group), while bridging connects different groups (between-group)."
+    },
+    {
+        question: "What is social network sampling?",
+        options: ["Data sampling", "Methods to study network subsets", "User selection", "Content filtering"],
+        correct: 1,
+        explanation: "Social network sampling involves various methods to study representative subsets of large social networks."
+    },
+    {
+        question: "What is reciprocity in social networks?",
+        options: ["Data exchange", "Mutual relationships between nodes", "Network protocol", "System backup"],
+        correct: 1,
+        explanation: "Reciprocity measures the tendency for relationships to be mutual - if A connects to B, B also connects to A."
+    },
+    {
+        question: "What is transitivity in social networks?",
+        options: ["Network transition", "Tendency for triangles to form", "Data transfer", "System state change"],
+        correct: 1,
+        explanation: "Transitivity is the tendency for friends of friends to also be friends, creating triangular relationships."
+    },
+    {
+        question: "What is assortative mixing in networks?",
+        options: ["Random mixing", "Similar nodes connecting to each other", "Data sorting", "Network organization"],
+        correct: 1,
+        explanation: "Assortative mixing occurs when nodes with similar attributes tend to connect to each other."
+    },
+    {
+        question: "What is the network diameter?",
+        options: ["Physical size", "Longest shortest path between any two nodes", "Network capacity", "Connection width"],
+        correct: 1,
+        explanation: "Network diameter is the longest shortest path between any two nodes in the network."
+    },
+    {
+        question: "What is degree distribution in networks?",
+        options: ["Temperature distribution", "Distribution of number of connections", "Data distribution", "Geographic spread"],
+        correct: 1,
+        explanation: "Degree distribution describes how the number of connections per node is distributed across the network."
+    },
+    {
+        question: "What is link prediction in social networks?",
+        options: ["Predicting failures", "Predicting future connections", "Network forecasting", "Data prediction"],
+        correct: 1,
+        explanation: "Link prediction algorithms predict which pairs of nodes are likely to form connections in the future."
+    },
+    {
+        question: "What is social proof validation?",
+        options: ["Identity verification", "Using social signals to validate content", "Data validation", "Network authentication"],
+        correct: 1,
+        explanation: "Social proof validation uses social signals like likes, shares, and comments to assess content credibility."
+    },
+    {
+        question: "What is collective intelligence?",
+        options: ["AI system", "Enhanced capability from group collaboration", "Shared memory", "Distributed computing"],
+        correct: 1,
+        explanation: "Collective intelligence is the enhanced capacity that emerges from collaboration between many individuals."
+    },
+    {
+        question: "What is social recommender system?",
+        options: ["Social introduction", "Recommendations based on social connections", "Network suggestion", "User management"],
+        correct: 1,
+        explanation: "Social recommender systems make recommendations based on social relationships and similar users' preferences."
+    },
+    {
+        question: "What is trust propagation in social networks?",
+        options: ["Network security", "Spreading trust through social connections", "Data propagation", "System reliability"],
+        correct: 1,
+        explanation: "Trust propagation involves inferring trust relationships by following paths of trust through social networks."
+    },
+    {
+        question: "What is sentiment analysis in social computing?",
+        options: ["Emotion detection", "Analyzing opinions and emotions in text", "User mood tracking", "Behavioral analysis"],
+        correct: 1,
+        explanation: "Sentiment analysis uses NLP to identify and extract subjective information, opinions, and emotions from text."
+    },
+    {
+        question: "What is social media mining?",
+        options: ["Cryptocurrency mining", "Extracting patterns from social data", "Data excavation", "Network archaeology"],
+        correct: 1,
+        explanation: "Social media mining involves extracting useful patterns and insights from social media data using data mining techniques."
+    },
+    {
+        question: "What is opinion mining?",
+        options: ["Mining operations", "Extracting opinions from text", "Data mining", "Resource extraction"],
+        correct: 1,
+        explanation: "Opinion mining is the computational study of opinions, sentiments, and emotions expressed in text."
+    },
+    {
+        question: "What is social graph analysis?",
+        options: ["Chart analysis", "Analyzing social network structures", "Graph theory", "Data visualization"],
+        correct: 1,
+        explanation: "Social graph analysis involves studying the structure and properties of social networks using graph theory."
+    },
+    {
+        question: "What is behavioral targeting?",
+        options: ["Target practice", "Advertising based on user behavior", "Performance targeting", "System optimization"],
+        correct: 1,
+        explanation: "Behavioral targeting uses user behavior data to deliver relevant advertisements and content."
+    },
+    {
+        question: "What is social bookmarking?",
+        options: ["Physical bookmarks", "Collaborative web page tagging", "Data bookmarking", "System shortcuts"],
+        correct: 1,
+        explanation: "Social bookmarking allows users to save, organize, and share web page bookmarks with tags and social features."
+    },
+    {
+        question: "What is folksonomy?",
+        options: ["Folk music", "User-generated classification system", "Cultural taxonomy", "Social categorization"],
+        correct: 1,
+        explanation: "Folksonomy is a classification system created by users through collaborative tagging and categorization."
+    },
+    {
+        question: "What is the long tail phenomenon?",
+        options: ["Animal anatomy", "Large number of niche items collectively significant", "Data structure", "Network topology"],
+        correct: 1,
+        explanation: "The long tail describes how many niche items can collectively have greater market share than popular items."
+    },
+    {
+        question: "What is social voting?",
+        options: ["Elections", "Community-driven content ranking", "Democratic process", "User polls"],
+        correct: 1,
+        explanation: "Social voting allows community members to vote on content quality, relevance, or importance."
+    },
+    {
+        question: "What is reputation system?",
+        options: ["Status tracking", "System for tracking user credibility", "Performance monitoring", "Quality assurance"],
+        correct: 1,
+        explanation: "Reputation systems track and display user credibility based on community feedback and behavior history."
+    },
+    {
+        question: "What is social curation?",
+        options: ["Museum work", "Community-driven content organization", "Data curation", "Content management"],
+        correct: 1,
+        explanation: "Social curation involves community members collecting, organizing, and sharing content around specific topics."
+    },
+    {
+        question: "What is participatory culture?",
+        options: ["Event participation", "Culture of active content creation and sharing", "Community involvement", "Social engagement"],
+        correct: 1,
+        explanation: "Participatory culture emphasizes active participation in creating and sharing content rather than passive consumption."
+    },
+    {
+        question: "What is digital divide in social computing?",
+        options: ["Data separation", "Gap between technology haves and have-nots", "Network partition", "System division"],
+        correct: 1,
+        explanation: "Digital divide refers to the gap between those who have access to modern ICT and those who don't."
+    },
+    {
+        question: "What is social presence?",
+        options: ["Physical presence", "Sense of being with others in mediated environment", "Network presence", "System availability"],
+        correct: 1,
+        explanation: "Social presence is the degree to which users feel they are interacting with real people in a mediated environment."
+    },
+    {
+        question: "What is ambient awareness?",
+        options: ["Environmental monitoring", "Awareness through peripheral social information", "System monitoring", "Background processing"],
+        correct: 1,
+        explanation: "Ambient awareness is the awareness of others' activities through peripheral social information from social media."
+    },
+    {
+        question: "What is social translucence?",
+        options: ["Visual transparency", "Making social interactions visible", "Network transparency", "Data clarity"],
+        correct: 1,
+        explanation: "Social translucence makes social interactions and activities visible to promote accountability and appropriate behavior."
+    },
+    {
+        question: "What is technology-mediated social participation?",
+        options: ["Hardware participation", "Social engagement through technology", "Technical involvement", "System participation"],
+        correct: 1,
+        explanation: "Technology-mediated social participation refers to engaging in social activities and relationships through technological means."
+    },
+    {
+        question: "What is collaborative consumption?",
+        options: ["Group eating", "Sharing economy and resource sharing", "Data consumption", "Network usage"],
+        correct: 1,
+        explanation: "Collaborative consumption involves sharing, swapping, or renting products and services through technology platforms."
+    },
+    {
+        question: "What is social innovation?",
+        options: ["Technology innovation", "New solutions to social problems", "Network innovation", "System improvement"],
+        correct: 1,
+        explanation: "Social innovation refers to new solutions (products, services, models) that meet social needs more effectively."
+    },
+    {
+        question: "What is digital citizenship?",
+        options: ["Online voting", "Responsible technology use and participation", "Digital identity", "Network membership"],
+        correct: 1,
+        explanation: "Digital citizenship encompasses the responsible and ethical use of technology and participation in digital society."
+    },
+    {
+        question: "What is social media governance?",
+        options: ["Government control", "Policies and practices for social media management", "Platform administration", "Content control"],
+        correct: 1,
+        explanation: "Social media governance involves policies, procedures, and practices for managing organizational social media presence."
+    },
+    {
+        question: "What is networked individualism?",
+        options: ["Individual networks", "Personal networks as social operating system", "Isolated users", "Single-user systems"],
+        correct: 1,
+        explanation: "Networked individualism describes how people operate through personal networks rather than traditional groups."
+    },
+    {
+        question: "What is social computing infrastructure?",
+        options: ["Physical infrastructure", "Technical foundation for social applications", "Network hardware", "System architecture"],
+        correct: 1,
+        explanation: "Social computing infrastructure provides the technical foundation and services needed to support social applications."
+    },
+    {
+        question: "What is peer-to-peer social networking?",
+        options: ["Direct connections", "Decentralized social networks", "P2P file sharing", "Network topology"],
+        correct: 1,
+        explanation: "P2P social networking involves decentralized networks where users connect directly without central servers."
+    },
+    {
+        question: "What is social software?",
+        options: ["Community software", "Software enabling social interaction", "Social media apps", "Group applications"],
+        correct: 1,
+        explanation: "Social software refers to applications and tools that enable and facilitate social interaction and collaboration."
+    },
+    {
+        question: "What is digital sociology?",
+        options: ["Computer sociology", "Study of society in digital age", "Online sociology", "Technology sociology"],
+        correct: 1,
+        explanation: "Digital sociology examines how digital technologies shape social relationships, structures, and processes."
+    },
+    {
+        question: "What is computational social science?",
+        options: ["Computer science", "Using computation to study social phenomena", "Social computing", "Data science"],
+        correct: 1,
+        explanation: "Computational social science uses computational methods to study social behavior and societal phenomena."
+    },
+    {
+        question: "What is social network visualization?",
+        options: ["Network diagrams", "Visual representation of social relationships", "Data visualization", "Graph display"],
+        correct: 1,
+        explanation: "Social network visualization creates visual representations of social networks to understand structures and patterns."
+    },
+    {
+        question: "What is social media intelligence?",
+        options: ["AI for social media", "Insights from social media data analysis", "Smart social platforms", "Intelligent systems"],
+        correct: 1,
+        explanation: "Social media intelligence involves gathering and analyzing social media data to gain business or security insights."
+    },
+    {
+        question: "What is human computation?",
+        options: ["Manual calculation", "Using human intelligence for computational tasks", "Brain computing", "Cognitive processing"],
+        correct: 1,
+        explanation: "Human computation leverages human intelligence to solve computational problems that are difficult for computers."
+    },
+    {
+        question: "What is social web?",
+        options: ["Spider web", "Web enhanced with social features", "Social networking", "Community websites"],
+        correct: 1,
+        explanation: "Social web refers to the evolution of the web to include social networking features and user interaction."
+    },
+            {
+                question: "Which platform is considered the first major social networking site?",
+                options: ["MySpace", "Facebook", "Six Degrees", "Friendster"],
+                correct: 2,
+                explanation: "Six Degrees (1997) is widely considered the first social networking site with modern features."
+            },
+            {
+                question: "What does 'Web 2.0' primarily refer to?",
+                options: ["The second version of HTML", "User-generated content and participation", "Faster internet speeds", "Mobile web browsing"],
+                correct: 1,
+                explanation: "Web 2.0 refers to the shift toward user-generated content and interactive web applications."
+            },
+            {
+                question: "In social network analysis, what does 'centrality' measure?",
+                options: ["Network speed", "A node's importance in the network", "Data storage capacity", "Security level"],
+                correct: 1,
+                explanation: "Centrality measures how important or influential a node (person/entity) is within a network."
+            },
+            {
+                question: "What is the 'strength of weak ties' theory about?",
+                options: ["Network infrastructure", "How loose connections can provide valuable information", "Password strength", "Data compression"],
+                correct: 1,
+                explanation: "This theory suggests that weak social connections often provide more novel information than strong ties."
+            },
+            {
+                question: "Which concept describes the phenomenon where people only see information that confirms their existing beliefs?",
+                options: ["Digital divide", "Echo chamber", "Network effect", "Viral marketing"],
+                correct: 1,
+                explanation: "Echo chambers occur when people are exposed only to information that reinforces their existing views."
+            },
+            {
+                question: "What is 'crowdsourcing'?",
+                options: ["Server clustering", "Obtaining input from a large group of people", "Data backup methods", "Network routing"],
+                correct: 1,
+                explanation: "Crowdsourcing involves getting contributions, ideas, or services from a large group of people."
+            },
+            {
+                question: "In the context of social media, what does 'viral' mean?",
+                options: ["Computer virus infection", "Content that spreads rapidly through sharing", "Video content only", "Paid advertisements"],
+                correct: 1,
+                explanation: "Viral content spreads rapidly from person to person through social networks, like a virus."
+            },
+            {
+                question: "What is the 'digital divide'?",
+                options: ["Separation between online and offline data", "Gap between those with and without access to technology", "Difference between mobile and desktop", "Division of network bandwidth"],
+                correct: 1,
+                explanation: "The digital divide refers to the gap between those who have access to technology and those who don't."
+            },
+            {
+                question: "Which term describes the practice of using game elements in non-game contexts?",
+                options: ["Virtualization", "Gamification", "Simulation", "Digitization"],
+                correct: 1,
+                explanation: "Gamification involves applying game design elements to encourage engagement in non-game activities."
+            },
+            {
+                question: "What is 'collective intelligence'?",
+                options: ["AI algorithms", "Enhanced group problem-solving ability", "Shared computer memory", "Network protocols"],
+                correct: 1,
+                explanation: "Collective intelligence is the enhanced capacity that results from collaboration and competition among groups."
+            },
+            {
+                question: "In social computing, what does 'folksonomy' refer to?",
+                options: ["Study of social groups", "User-generated classification system", "Traditional taxonomy", "Demographic analysis"],
+                correct: 1,
+                explanation: "Folksonomy is a classification system created collaboratively by users through tagging."
+            },
+            {
+                question: "What is the primary purpose of recommendation systems in social platforms?",
+                options: ["System security", "Suggesting relevant content to users", "Data backup", "Network optimization"],
+                correct: 1,
+                explanation: "Recommendation systems analyze user behavior to suggest relevant content, products, or connections."
+            },
+            {
+                question: "Which metric is commonly used to measure user engagement on social platforms?",
+                options: ["Server uptime", "Time spent on platform", "Bandwidth usage", "Storage capacity"],
+                correct: 1,
+                explanation: "Time spent on platform is a key metric for measuring how engaged users are with the content."
+            },
+            {
+                question: "What does 'social proof' mean in the context of online behavior?",
+                options: ["Identity verification", "People following others' actions as guidance", "Password authentication", "Network security"],
+                correct: 1,
+                explanation: "Social proof is the tendency for people to follow the actions of others when uncertain about what to do."
+            },
+            {
+                question: "In collaborative filtering, what is used to make recommendations?",
+                options: ["Server specifications", "Similarities between users or items", "Network topology", "Storage algorithms"],
+                correct: 1,
+                explanation: "Collaborative filtering uses similarities between users or items to predict preferences and make recommendations."
+            },
+            {
+                question: "What is 'slacktivism'?",
+                options: ["Efficient work practices", "Low-effort online activism", "Social media algorithms", "Network optimization"],
+                correct: 1,
+                explanation: "Slacktivism refers to activism that requires minimal effort, often just clicking or sharing online."
+            },
+            {
+                question: "Which concept describes how information spreads through a network?",
+                options: ["Data encryption", "Information diffusion", "File compression", "Network routing"],
+                correct: 1,
+                explanation: "Information diffusion studies how information, ideas, or behaviors spread through social networks."
+            },
+            {
+                question: "What is the main goal of social media analytics?",
+                options: ["Server monitoring", "Understanding user behavior and trends", "Data storage optimization", "Network security"],
+                correct: 1,
+                explanation: "Social media analytics aims to understand user behavior, engagement patterns, and social trends."
+            },
+            {
+                question: "In the context of online communities, what does 'lurker' refer to?",
+                options: ["Malicious user", "Passive observer who doesn't contribute", "System administrator", "Content moderator"],
+                correct: 1,
+                explanation: "A lurker is someone who observes online community discussions but rarely or never contributes content."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let selectedAnswer = null;
+        let answered = false;
+
+        function loadQuestion() {
+            const question = questions[currentQuestion];
+            document.getElementById('questionText').textContent = question.question;
+            document.getElementById('questionCounter').textContent = `Question ${currentQuestion + 1} of ${questions.length}`;
+            
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+            
+            question.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.textContent = option;
+                optionElement.onclick = () => selectAnswer(index);
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            updateProgressBar();
+            resetFeedback();
+            selectedAnswer = null;
+            answered = false;
+            document.getElementById('nextBtn').disabled = true;
+        }
+
+        function selectAnswer(index) {
+            if (answered) return;
+            
+            selectedAnswer = index;
+            const options = document.querySelectorAll('.option');
+            
+            options.forEach((option, i) => {
+                option.classList.remove('selected');
+                if (i === index) {
+                    option.classList.add('selected');
+                }
+            });
+            
+            checkAnswer();
+        }
+
+        function checkAnswer() {
+            if (selectedAnswer === null) return;
+            
+            answered = true;
+            const question = questions[currentQuestion];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+            
+            options.forEach((option, index) => {
+                if (index === question.correct) {
+                    option.classList.add('correct');
+                } else if (index === selectedAnswer) {
+                    option.classList.add('incorrect');
+                }
+                option.style.pointerEvents = 'none';
+            });
+            
+            if (selectedAnswer === question.correct) {
+                score++;
+                feedback.textContent = `Correct! ${question.explanation}`;
+                feedback.className = 'feedback correct show';
+            } else {
+                feedback.textContent = `Incorrect. ${question.explanation}`;
+                feedback.className = 'feedback incorrect show';
+            }
+            
+            document.getElementById('nextBtn').disabled = false;
+            
+            if (currentQuestion === questions.length - 1) {
+                document.getElementById('nextBtn').textContent = 'View Results';
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function updateProgressBar() {
+            const progress = ((currentQuestion + 1) / questions.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function resetFeedback() {
+            const feedback = document.getElementById('feedback');
+            feedback.className = 'feedback';
+            feedback.textContent = '';
+            
+            const options = document.querySelectorAll('.option');
+            options.forEach(option => {
+                option.classList.remove('selected', 'correct', 'incorrect');
+                option.style.pointerEvents = 'auto';
+            });
+        }
+
+        function showResults() {
+            document.getElementById('quizContent').style.display = 'none';
+            document.querySelector('.controls').style.display = 'none';
+            document.querySelector('.quiz-header').style.display = 'none';
+            
+            const results = document.getElementById('results');
+            const finalScore = document.getElementById('finalScore');
+            const scoreMessage = document.getElementById('scoreMessage');
+            
+            const percentage = Math.round((score / questions.length) * 100);
+            
+            finalScore.textContent = `${score}/${questions.length} (${percentage}%)`;
+            
+            let message = '';
+            if (percentage >= 90) {
+                message = 'Excellent! You have a strong understanding of Social Computing!';
+            } else if (percentage >= 70) {
+                message = 'Good job! You have a solid grasp of the concepts.';
+            } else if (percentage >= 50) {
+                message = 'Not bad! Consider reviewing some topics for better understanding.';
+            } else {
+                message = 'Keep studying! Social Computing has many interesting concepts to explore.';
+            }
+            
+            scoreMessage.textContent = message;
+            results.classList.add('show');
+        }
+
+        function restartQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            selectedAnswer = null;
+            answered = false;
+            
+            document.getElementById('quizContent').style.display = 'block';
+            document.querySelector('.controls').style.display = 'flex';
+            document.querySelector('.quiz-header').style.display = 'block';
+            document.getElementById('results').classList.remove('show');
+            document.getElementById('nextBtn').textContent = 'Next Question';
+            
+            loadQuestion();
+        }
+
+        function exitQuiz() {
+            if (confirm('Are you sure you want to exit the quiz? Your progress will be lost.')) {
+                window.close();
+            }
+        }
+
+        // Initialize quiz
+        loadQuestion();
+    </script>
+</body>
+</html>
